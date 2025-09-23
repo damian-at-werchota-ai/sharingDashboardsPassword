@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>n8n RAG Workflows Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.95;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            animation: fadeInUp 0.8s ease;
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .filters {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .filter-btn {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .filter-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-color: #764ba2;
+        }
+        
+        .workflows-grid {
+            display: grid;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .workflow-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            animation: slideIn 0.5s ease;
+            display: none;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .workflow-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+        
+        .workflow-card.show {
+            display: block;
+        }
+        
+        .workflow-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .workflow-header:hover .workflow-title {
+            color: #667eea;
+        }
+        
+        .workflow-title {
+            font-size: 1.3rem;
+            color: #333;
+            font-weight: 600;
+            transition: color 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .expand-icon {
+            display: inline-block;
+            transition: transform 0.3s ease;
+            font-size: 1.2rem;
+        }
+        
+        .workflow-card.expanded .expand-icon {
+            transform: rotate(90deg);
+        }
+        
+        .workflow-type {
+            display: inline-block;
+            padding: 5px 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .workflow-description {
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .tech-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .tech-tag {
+            display: inline-block;
+            padding: 5px 12px;
+            background: #f0f2f5;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            color: #555;
+        }
+        
+        .workflow-details {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .detail-label {
+            color: #888;
+        }
+        
+        .detail-value {
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .json-container {
+            display: none;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f2f5;
+        }
+        
+        .workflow-card.expanded .json-container {
+            display: block;
+        }
+        
+        .json-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .json-title {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1rem;
+        }
+        
+        .copy-btn {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        .copy-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .copy-btn.copied {
+            background: #10b981;
+        }
+        
+        .json-code {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            max-height: 500px;
+            overflow-y: auto;
+            white-space: pre;
+        }
+        
+        .json-code::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        .json-code::-webkit-scrollbar-track {
+            background: #2d2d2d;
+        }
+        
+        .json-code::-webkit-scrollbar-thumb {
+            background: #666;
+            border-radius: 4px;
+        }
+        
+        .json-code::-webkit-scrollbar-thumb:hover {
+            background: #888;
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .search-box {
+            width: 100%;
+            padding: 12px 20px;
+            border: 2px solid #eee;
+            border-radius: 25px;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .search-box:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 n8n RAG Workflows Dashboard</h1>
+            <p class="subtitle">Analysis of Retrieval Augmented Generation Implementations with Complete JSON Code</p>
+        </header>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">9</div>
+                <div class="stat-label">Total RAG Workflows</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">3</div>
+                <div class="stat-label">Vector Stores</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">6</div>
+                <div class="stat-label">Document Types</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">4</div>
+                <div class="stat-label">RAG Patterns</div>
+            </div>
+        </div>
+        
+        <div class="filters">
+            <input type="text" class="search-box" placeholder="Search workflows by name, technology, or description..." id="searchBox">
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">All Workflows</button>
+                <button class="filter-btn" data-filter="pinecone">Pinecone</button>
+                <button class="filter-btn" data-filter="qdrant">Qdrant</button>
+                <button class="filter-btn" data-filter="qa">Q&A Systems</button>
+                <button class="filter-btn" data-filter="summarization">Summarization</button>
+                <button class="filter-btn" data-filter="embeddings">Embeddings</button>
+            </div>
+        </div>
+        
+        <div class="workflows-grid" id="workflowsContainer">
+            <!-- Workflow cards will be inserted here -->
+        </div>
+    </div>
+    
+    <script>
+        const workflows = [
+            {
+                id: "0467",
+                filename: "0467_Webhook_Respondtowebhook_Send_Webhook.json",
+                title: "Webhook-based RAG with Qdrant",
+                type: "Q&A System",
+                description: "Implements a webhook-triggered RAG system using Qdrant Vector Store for document retrieval and OpenAI for response generation. Features a Retrieval QA Chain with Google Drive document loading.",
+                technologies: ["Qdrant", "OpenAI", "Google Drive", "Webhooks"],
+                nodes: ["Webhook", "Retrieval QA Chain", "Vector Store Retriever", "Qdrant Vector Store", "OpenAI Chat Model"],
+                pattern: "Document Retrieval + Q&A",
+                categories: ["qdrant", "qa", "embeddings"],
+                jsonCode: `{
+  "meta": {
+    "instanceId": "408f9fb9940c3cb18ffdef0e0150fe342d6e655c3a9fac21f0f644e8bedabcd9",
+    "templateCredsSetupCompleted": true
+  },
+  "nodes": [
+    {
+      "id": "c970f654-4c79-4637-bec0-73f79a01ab59",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [2180, 320],
+      "webhookId": "55b825ad-8987-4618-ae92-d9b08966324b",
+      "parameters": {
+        "path": "19f5499a-3083-4783-93a0-e8ed76a9f742",
+        "options": {},
+        "httpMethod": "POST",
+        "responseMode": "responseNode"
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "e05e9046-de17-4ca1-b1ac-2502ee123e5f",
+      "name": "Retrieval QA Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainRetrievalQa",
+      "position": [2420, 120],
+      "parameters": {
+        "text": "={{ $json.chatInput || $json.body.input }}",
+        "options": {},
+        "promptType": "define"
+      },
+      "typeVersion": 1.5
+    },
+    {
+      "id": "ecf0d248-a8a9-45ed-8786-8864547f79b6",
+      "name": "Vector Store Retriever",
+      "type": "@n8n/n8n-nodes-langchain.retrieverVectorStore",
+      "position": [2580, 320],
+      "parameters": {
+        "topK": 5
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "4fb1d8ac-bc6f-4f99-965f-7d38ea0680e0",
+      "name": "Qdrant Vector Store1",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "position": [2540, 460],
+      "parameters": {
+        "options": {},
+        "qdrantCollection": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.body.company }}"
+        }
+      },
+      "credentials": {
+        "qdrantApi": {
+          "id": "NyinAS3Pgfik66w5",
+          "name": "QdrantApi account"
+        }
+      },
+      "typeVersion": 1.1
+    },
+    {
+      "id": "66868422-39c9-4e76-99b9-a77bb613b248",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [2420, 340],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "8gccIjcuf3gvaoEr",
+          "name": "OpenAi account"
+        }
+      },
+      "typeVersion": 1.2
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{"node": "Retrieval QA Chain", "type": "main", "index": 0}]]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [[{"node": "Retrieval QA Chain", "type": "ai_languageModel", "index": 0}]]
+    },
+    "Qdrant Vector Store1": {
+      "ai_vectorStore": [[{"node": "Vector Store Retriever", "type": "ai_vectorStore", "index": 0}]]
+    },
+    "Vector Store Retriever": {
+      "ai_retriever": [[{"node": "Retrieval QA Chain", "type": "ai_retriever", "index": 0}]]
+    }
+  }
+}`
+            },
+            {
+                id: "0458",
+                filename: "0458_Manual_Code_Create_Triggered.json",
+                title: "Advanced Pinecone RAG with Citations",
+                type: "Document Retrieval",
+                description: "Sophisticated RAG implementation with Pinecone vector store, featuring chunk-based retrieval with citation tracking. Includes custom code for preparing chunks and composing citations.",
+                technologies: ["Pinecone", "OpenAI", "Google Drive", "Custom Code"],
+                nodes: ["Pinecone Vector Store", "Recursive Character Text Splitter", "Default Data Loader", "OpenAI Embeddings"],
+                pattern: "Advanced Document Q&A with Citations",
+                categories: ["pinecone", "qa", "embeddings"],
+                jsonCode: `{
+  "meta": {
+    "instanceId": "408f9fb9940c3cb18ffdef0e0150fe342d6e655c3a9fac21f0f644e8bedabcd9"
+  },
+  "nodes": [
+    {
+      "id": "91b9132e-ef51-4044-be1b-f391aeeb467c",
+      "name": "Get top chunks matching query",
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "position": [-220, 760],
+      "parameters": {
+        "mode": "load",
+        "topK": "={{ $json.chunks }}",
+        "prompt": "={{ $json.chatInput }}",
+        "options": {},
+        "pineconeIndex": {
+          "__rl": true,
+          "mode": "id",
+          "value": "test-index"
+        }
+      },
+      "credentials": {
+        "pineconeApi": {
+          "id": "OHDlDbBkaPDgpnOY",
+          "name": "PineconeApi account"
+        }
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "5ad6e0fd-c296-4507-8232-164b5be57f4a",
+      "name": "Prepare chunks",
+      "type": "n8n-nodes-base.code",
+      "position": [140, 760],
+      "parameters": {
+        "jsCode": "let out = \\"\\"\nfor (const i in $input.all()) {\n  let itemText = \\"--- CHUNK \\" + i + \\" ---\\\\n\\"\n  itemText += $input.all()[i].json.document.pageContent + \\"\\\\n\\"\n  itemText += \\"\\\\n\\"\n  out += itemText\n}\n\nreturn {'context': out};"
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "e43abc0c-cedf-4e73-a766-7fad57601cfe",
+      "name": "Compose citations",
+      "type": "n8n-nodes-base.set",
+      "position": [700, 760],
+      "parameters": {
+        "options": {},
+        "assignments": {
+          "assignments": [{
+            "id": "ace6185e-8b3d-4f89-ae36-dfe0c391a0a9",
+            "name": "citations",
+            "type": "array",
+            "value": "={{ $json.citations.map(i => '[' + $('Get top chunks matching query').all()[$json.citations].json.document.metadata.file_name + ', lines ' + $('Get top chunks matching query').all()[$json.citations].json.document.metadata['loc.lines.from'] + '-' + $('Get top chunks matching query').all()[$json.citations].json.document.metadata['loc.lines.to'] + ']') }}"
+          }]
+        }
+      },
+      "typeVersion": 3.4
+    }
+  ],
+  "connections": {
+    "Get top chunks matching query": {
+      "main": [[{"node": "Prepare chunks", "type": "main", "index": 0}]]
+    },
+    "Prepare chunks": {
+      "main": [[{"node": "Answer the query based on chunks", "type": "main", "index": 0}]]
+    }
+  }
+}`
+            },
+            {
+                id: "0326",
+                filename: "0326_Manual_Stickynote_Send_Triggered.json",
+                title: "Pinecone Vector Store with AI Agent",
+                type: "Q&A Agent",
+                description: "RAG system using Pinecone as a tool for an AI Agent. Includes document loading from Google Drive, text splitting, and tool-based retrieval for conversational Q&A.",
+                technologies: ["Pinecone", "OpenAI", "AI Agent", "Google Drive"],
+                nodes: ["Pinecone Vector Store", "Question & Answer Agent", "Recursive Character Text Splitter", "Chat Trigger"],
+                pattern: "Tool-based RAG Agent",
+                categories: ["pinecone", "qa", "embeddings"],
+                jsonCode: `{
+  "meta": {
+    "instanceId": "408f9fb9940c3cb18ffdef0e0150fe342d6e655c3a9fac21f0f644e8bedabcd9"
+  },
+  "nodes": [
+    {
+      "id": "0a6f8b88-9c62-4e3e-82cb-a7028bdcac45",
+      "name": "Pinecone Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "position": [80, -20],
+      "parameters": {
+        "mode": "insert",
+        "options": {
+          "clearNamespace": true
+        },
+        "pineconeIndex": {
+          "__rl": true,
+          "mode": "id",
+          "value": "test-index"
+        }
+      },
+      "credentials": {
+        "pineconeApi": {
+          "id": "OHDlDbBkaPDgpnOY",
+          "name": "PineconeApi account"
+        }
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "7b6cdba3-906b-44dd-85be-1d515337972b",
+      "name": "Pinecone Vector Store1",
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "position": [920, 200],
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "options": {},
+        "toolName": "bitcoin_paper",
+        "pineconeIndex": {
+          "__rl": true,
+          "mode": "id",
+          "value": "test-index"
+        },
+        "toolDescription": "Call this tool to retrieve facts from the bitcoin whitepaper",
+        "includeDocumentMetadata": false
+      },
+      "credentials": {
+        "pineconeApi": {
+          "id": "OHDlDbBkaPDgpnOY",
+          "name": "PineconeApi account"
+        }
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "9388b413-f133-45a6-8066-cf71c0fb826c",
+      "name": "Question & Answer",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [800, -20],
+      "parameters": {
+        "options": {}
+      },
+      "typeVersion": 1.8
+    }
+  ],
+  "connections": {
+    "Google Drive": {
+      "main": [[{"node": "Pinecone Vector Store", "type": "main", "index": 0}]]
+    },
+    "Pinecone Vector Store1": {
+      "ai_tool": [[{"node": "Question & Answer", "type": "ai_tool", "index": 0}]]
+    },
+    "When chat message received": {
+      "main": [[{"node": "Question & Answer", "type": "main", "index": 0}]]
+    }
+  }
+}`
+            },
+            {
+                id: "0341",
+                filename: "0341_Code_Filter_Import_Webhook.json",
+                title: "Batch Upload to Qdrant for Image Embeddings",
+                type: "Vector Storage",
+                description: "Specialized workflow for batch uploading image embeddings to Qdrant. Implements multimodal RAG with Voyage AI for image embeddings, includes anomaly detection preparation.",
+                technologies: ["Qdrant", "Voyage AI", "Google Cloud Storage", "Batch Processing"],
+                nodes: ["Qdrant Collection Creation", "Payload Index", "Batch Upload", "Image Embedding"],
+                pattern: "Multimodal RAG Setup",
+                categories: ["qdrant", "embeddings"],
+                jsonCode: `{
+  "meta": {
+    "instanceId": "408f9fb9940c3cb18ffdef0e0150fe342d6e655c3a9fac21f0f644e8bedabcd9"
+  },
+  "nodes": [
+    {
+      "id": "250c6a8d-f545-4037-8069-c834437bbe15",
+      "name": "Create Qdrant Collection",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [320, 160],
+      "parameters": {
+        "url": "={{ $('Qdrant cluster variables').first().json.qdrantCloudURL }}/collections/{{ $('Qdrant cluster variables').first().json.collectionName }}",
+        "method": "PUT",
+        "options": {},
+        "jsonBody": "={{\\n{\\n  \\"vectors\\": {\\n    \\"voyage\\": { \\n      \\"size\\": $('Qdrant cluster variables').first().json.VoyageEmbeddingsDim, \\n      \\"distance\\": \\"Cosine\\" \\n    } \\n  }\\n}\\n}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "qdrantApi"
+      },
+      "credentials": {
+        "qdrantApi": {
+          "id": "it3j3hP9FICqhgX6",
+          "name": "QdrantApi account"
+        }
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "f88d290e-3311-4322-b2a5-1350fc1f8768",
+      "name": "Embed crop image",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [2120, 160],
+      "parameters": {
+        "url": "https://api.voyageai.com/v1/multimodalembeddings",
+        "method": "POST",
+        "options": {},
+        "jsonBody": "={{\\n{\\n  \\"inputs\\": $json.batchVoyage,\\n  \\"model\\": \\"voyage-multimodal-3\\",\\n  \\"input_type\\": \\"document\\"\\n}\\n}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Vb0RNVDnIHmgnZOP",
+          "name": "Voyage API"
+        }
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "01b92e7e-d954-4d58-85b1-109c336546c4",
+      "name": "Filtering out tomato to test anomalies",
+      "type": "n8n-nodes-base.filter",
+      "position": [1340, 160],
+      "parameters": {
+        "options": {},
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [{
+            "id": "f7953ae2-5333-4805-abe5-abf6da645c5e",
+            "operator": {
+              "type": "string",
+              "operation": "notEquals"
+            },
+            "leftValue": "={{ $json.cropName }}",
+            "rightValue": "tomato"
+          }]
+        }
+      },
+      "typeVersion": 2.2
+    }
+  ],
+  "connections": {
+    "Embed crop image": {
+      "main": [[{"node": "Batch Upload to Qdrant", "type": "main", "index": 0}]]
+    },
+    "Filtering out tomato to test anomalies": {
+      "main": [[{"node": "Split in batches, generate uuids for Qdrant points", "type": "main", "index": 0}]]
+    }
+  }
+}`
+            },
+            {
+                id: "0324",
+                filename: "0324_Manual_Stickynote_Update_Triggered.json",
+                title: "Workflow Retriever Q&A Chain",
+                type: "Q&A System",
+                description: "Implements a Question and Answer Chain with a custom Workflow Retriever, enabling RAG across workflow-stored knowledge.",
+                technologies: ["OpenAI", "Workflow Retriever", "Custom Chain"],
+                nodes: ["Question and Answer Chain", "Workflow Retriever", "OpenAI Chat Model"],
+                pattern: "Workflow-based Retrieval",
+                categories: ["qa"],
+                jsonCode: `{
+  "meta": {
+    "instanceId": "408f9fb9940c3cb18ffdef0e0150fe342d6e655c3a9fac21f0f644e8bedabcd9"
+  },
+  "nodes": [
+    {
+      "id": "74479c7b-3d64-4715-90e9-250560f3ea3d",
+      "name": "Question and Answer Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainRetrievalQa",
+      "position": [-500, 500],
+      "parameters": {
+        "options": {}
+      },
+      "typeVersion": 1.4
+    },
+    {
+      "id": "912affaa-efea-435e-bad5-2f2ac31b7fd6",
+      "name": "OpenAI Chat Model1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [-560, 760],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "8gccIjcuf3gvaoEr",
+          "name": "OpenAi account"
+        }
+      },
+      "typeVersion": 1.2
+    },
+    {
+      "id": "6da9d2ae-83d6-4bde-b013-71d313fcbe9b",
+      "name": "Workflow Retriever",
+      "type": "@n8n/n8n-nodes-langchain.retrieverWorkflow",
+      "position": [-240, 760],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "QacfBRBnf1xOyckC"
+        }
+      },
+      "typeVersion": 1.1
+    }
+  ],
+  "connections": {
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [[{"node": "Question and Answer Chain", "type": "ai_languageModel", "index": 0}]]
+    },
+    "Workflow Retriever": {
+      "ai_retriever": [[{"node": "Question and Answer Chain", "type": "ai_retriever", "index": 0}]]
+    },
+    "Edit Fields": {
+      "main": [[{"node": "Question and Answer Chain", "type": "main", "index": 0}]]
+    }
+  }
+}`
+            },
+            {
+                id: "0322",
+                filename: "0322_Splitout_Code_Send_Triggered.json",
+                title: "Podcast Transcript RAG with Research",
+                type: "Summarization + Q&A",
+                description: "Advanced RAG workflow for podcast transcripts featuring summarization, topic extraction, and Wikipedia-based research augmentation for comprehensive content analysis.",
+                technologies: ["OpenAI", "Wikipedia Tool", "Document Loader", "Gmail"],
+                nodes: ["Summarize Transcript", "Extract Topics", "AI Agent", "Wikipedia Research"],
+                pattern: "Multi-stage Content Analysis",
+                categories: ["summarization", "qa"],
+                jsonCode: `{
+  "meta": {
+    "instanceId": "408f9fb9940c3cb18ffdef0e0150fe342d6e655c3a9fac21f0f644e8bedabcd9"
+  },
+  "nodes": [
+    {
+      "id": "cb911db1-d2af-4d2b-9338-3804f89d6de2",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "position": [-380, 722.5],
+      "parameters": {
+        "options": {}
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "20e60d3a-bc0d-4918-b0bc-53dea0b31e15",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [-500, 720],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "8gccIjcuf3gvaoEr",
+          "name": "OpenAi account"
+        }
+      },
+      "typeVersion": 1.2
+    },
+    {
+      "id": "e6d03a52-ba51-4661-a3ff-647bffe1dc4a",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [680, 500],
+      "parameters": {
+        "text": "=Question: {{ $json.question }}\\nWhy: {{ $json.why }}\\n\\nContext:  {{ $('Summarize Transcript').first().json.response.text }}\\n",
+        "options": {},
+        "promptType": "define"
+      },
+      "typeVersion": 1.8
+    },
+    {
+      "id": "70c1fa3b-40b2-4015-b6dd-5f0750c80c1b",
+      "name": "Wikipedia",
+      "type": "@n8n/n8n-nodes-langchain.toolWikipedia",
+      "position": [860, 720],
+      "parameters": {},
+      "typeVersion": 1
+    }
+  ],
+  "connections": {
+    "Wikipedia": {
+      "ai_tool": [[{"node": "AI Agent", "type": "ai_tool", "index": 0}]]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [[{"node": "Summarize Transcript", "type": "ai_languageModel", "index": 0}]]
+    },
+    "Default Data Loader": {
+      "ai_document": [[{"node": "Summarize Transcript", "type": "ai_document", "index": 0}]]
+    }
+  }
+}`
+            },
+            {
+                id: "0328",
+                filename: "0328_Manual_GoogleDrive_Automate_Triggered.json",
+                title: "Google Drive Document Summarization",
+                type: "Summarization",
+                description: "Simple RAG workflow for summarizing documents from Google Drive using token splitting and summarization chains.",
+                technologies: ["Google Drive", "OpenAI", "Token Splitter"],
+                nodes: ["Google Drive", "Summarization Chain", "Token Splitter", "Default Data Loader"],
+                pattern: "Document Summarization",
+                categories: ["summarization"],
+                jsonCode: `{
+  "meta": {
+    "instanceId": "408f9fb9940c3cb18ffdef0e0150fe342d6e655c3a9fac21f0f644e8bedabcd9"
+  },
+  "nodes": [
+    {
+      "id": "7a2b2f4c-8153-4cac-9bb2-45c46f28f8a5",
+      "name": "Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [180, 520],
+      "parameters": {
+        "fileId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://drive.google.com/file/d/11Koq9q53nkk0F5Y8eZgaWJUVR03I4-MM/view"
+        },
+        "options": {},
+        "operation": "download"
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "yOwz41gMQclOadgu",
+          "name": "Google Drive account"
+        }
+      },
+      "typeVersion": 3
+    },
+    {
+      "id": "e803a016-a9e7-4af2-bca2-05f9243196b2",
+      "name": "Summarization Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainSummarization",
+      "position": [400, 520],
+      "parameters": {
+        "options": {},
+        "operationMode": "documentLoader"
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "244ed66f-1dde-4a56-90ec-cb31644f3d5a",
+      "name": "Token Splitter1",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterTokenSplitter",
+      "position": [620, 880],
+      "parameters": {
+        "chunkSize": 3000
+      },
+      "typeVersion": 1
+    }
+  ],
+  "connections": {
+    "Google Drive": {
+      "main": [[{"node": "Summarization Chain", "type": "main", "index": 0}]]
+    },
+    "Token Splitter1": {
+      "ai_textSplitter": [[{"node": "Default Data Loader", "type": "ai_textSplitter", "index": 0}]]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [[{"node": "Summarization Chain", "type": "ai_languageModel", "index": 0}]]
+    }
+  }
+}`
+            },
+            {
+                id: "0318",
+                filename: "0318_Splitout_Limit_Automation_Webhook.json",
+                title: "Paul Graham Essays Summarizer",
+                type: "Summarization",
+                description: "Specialized workflow for fetching and summarizing Paul Graham's essays with structured extraction and formatting.",
+                technologies: ["HTTP Request", "OpenAI", "Text Splitter", "Summarization Chain"],
+                nodes: ["Fetch Essay", "Extract Text", "Summarization Chain", "Clean Up"],
+                pattern: "Web Content Summarization",
+                categories: ["summarization"],
+                jsonCode: `{
+  "meta": {
+    "instanceId": "408f9fb9940c3cb18ffdef0e0150fe342d6e655c3a9fac21f0f644e8bedabcd9"
+  },
+  "nodes": [
+    {
+      "id": "adf51f27-8d3e-49a8-b850-7990d355dc81",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "position": [-260, 1600],
+      "parameters": {
+        "options": {},
+        "jsonData": "={{ $('Extract Text Only').item.json.data }}",
+        "jsonMode": "expressionData"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "a656524a-9f77-4922-9de7-e2221ac82b70",
+      "name": "Clean up",
+      "type": "n8n-nodes-base.set",
+      "position": [360, 1380],
+      "parameters": {
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7b337b47-a1c6-470e-881f-0c038b4917e5",
+              "name": "title",
+              "type": "string",
+              "value": "={{ $json.title }}"
+            },
+            {
+              "id": "ca820521-4fff-4971-84b5-e6e2dbd8bb7a",
+              "name": "summary",
+              "type": "string",
+              "value": "={{ $json.response.text }}"
+            },
+            {
+              "id": "0fd9b5e3-44dd-49a3-82c1-3a4aa4698376",
+              "name": "url",
+              "type": "string",
+              "value": "=http://www.paulgraham.com/{{ $('Limit to first 3').first().json.essay }}"
+            }
+          ]
+        }
+      },
+      "typeVersion": 3.4
+    }
+  ],
+  "connections": {
+    "Fetch essay texts": {
+      "main": [
+        [{"node": "Extract title", "type": "main", "index": 0}],
+        [{"node": "Extract Text Only", "type": "main", "index": 0}]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [[{"node": "Summarization Chain", "type": "ai_document", "index": 0}]]
+    },
+    "Summarization Chain": {
+      "main": [[{"node": "Merge", "type": "main", "index": 1}]]
+    }
+  }
+}`
+            },
+            {
+                id: "0399",
+                filename: "0399_Manual_Stickynote_Automate_Triggered.json",
+                title: "YouTube Video RAG with LangChain",
+                type: "Video Analysis",
+                description: "Custom LangChain implementation for YouTube video transcription and summarization. Uses SearchAPI for transcript loading and refine-type summarization chains.",
+                technologies: ["LangChain", "SearchAPI", "YouTube", "OpenAI"],
+                nodes: ["LangChain Code", "SearchAPI Loader", "Token Text Splitter", "Summarization Chain"],
+                pattern: "Video Content Analysis",
+                categories: ["summarization"],
+                jsonCode: `{
+  "meta": {
+    "instanceId": "408f9fb9940c3cb18ffdef0e0150fe342d6e655c3a9fac21f0f644e8bedabcd9"
+  },
+  "nodes": [
+    {
+      "id": "a43bb1c5-dd90-4331-930c-128ef0ecb38a",
+      "name": "LangChain Code",
+      "type": "@n8n/n8n-nodes-langchain.code",
+      "position": [-380, 20],
+      "parameters": {
+        "code": {
+          "execute": {
+            "code": "// IMPORTANT: add in your API key for searchapi.io below\\nconst searchApiKey = \\"<YOUR API KEY>\\"\\n\\nconst { loadSummarizationChain } = require(\\"langchain/chains\\");\\nconst { SearchApiLoader } = require(\\"@n8n/n8n-nodes-langchain/node_modules/@langchain/community/document_loaders/web/searchapi.cjs\\");\\nconst { PromptTemplate } = require(\\"@langchain/core/prompts\\");\\nconst { TokenTextSplitter } = require(\\"langchain/text_splitter\\");\\nconst loader = new SearchApiLoader({\\n  engine: \\"youtube_transcripts\\",\\n  video_id: $input.item.json.videoId,\\n  apiKey: searchApiKey,\\n});\\n\\nif (searchApiKey == \\"<YOUR API KEY>\\") {\\n  throw new Error(\\"Please add your API key for searchapi.io to this node\\")\\n}\\n\\nconst docs = await loader.load();\\n\\nconst splitter = new TokenTextSplitter({\\n  chunkSize: 10000,\\n  chunkOverlap: 250,\\n});\\n\\nconst docsSummary = await splitter.splitDocuments(docs);\\n\\nconst llmSummary = await this.getInputConnectionData('ai_languageModel', 0);\\n\\nconst summaryTemplate = \`\\nYou are an expert in summarizing YouTube videos.\\nYour goal is to create a summary of a podcast.\\nBelow you find the transcript of a podcast:\\n--------\\n{text}\\n--------\\n\\nThe transcript of the podcast will also be used as the basis for a question and answer bot.\\nProvide some examples questions and answers that could be asked about the podcast.\\n\`"
+          }
+        },
+        "inputs": {
+          "input": [{
+            "type": "main",
+            "required": true,
+            "maxConnections": 1
+          }, {
+            "type": "ai_languageModel",
+            "required": true,
+            "maxConnections": 1
+          }]
+        },
+        "outputs": {
+          "output": [{"type": "main"}]
+        }
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "02386530-9aef-4732-9972-5624b78431a6",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [-340, 220],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "8gccIjcuf3gvaoEr",
+          "name": "OpenAi account"
+        }
+      },
+      "typeVersion": 1.2
+    }
+  ],
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [[{"node": "LangChain Code", "type": "ai_languageModel", "index": 0}]]
+    },
+    "Set YouTube video ID": {
+      "main": [[{"node": "LangChain Code", "type": "main", "index": 0}]]
+    }
+  }
+}`
+            }
+        ];
+        
+        function renderWorkflows(filteredWorkflows = workflows) {
+            const container = document.getElementById('workflowsContainer');
+            container.innerHTML = '';
+            
+            filteredWorkflows.forEach((workflow, index) => {
+                const card = document.createElement('div');
+                card.className = 'workflow-card show';
+                card.style.animationDelay = `${index * 0.1}s`;
+                card.id = `workflow-${workflow.id}`;
+                
+                card.innerHTML = `
+                    <div class="workflow-header" onclick="toggleWorkflow('${workflow.id}')">
+                        <h3 class="workflow-title">
+                            <span class="expand-icon">▶</span>
+                            ${workflow.title}
+                        </h3>
+                        <span class="workflow-type">${workflow.type}</span>
+                    </div>
+                    <p class="workflow-description">${workflow.description}</p>
+                    <div class="tech-tags">
+                        ${workflow.technologies.map(tech => `<span class="tech-tag">${tech}</span>`).join('')}
+                    </div>
+                    <div class="workflow-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Workflow ID:</span>
+                            <span class="detail-value">${workflow.id}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Filename:</span>
+                            <span class="detail-value">${workflow.filename}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Pattern:</span>
+                            <span class="detail-value">${workflow.pattern}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Node Count:</span>
+                            <span class="detail-value">${workflow.nodes.length}</span>
+                        </div>
+                    </div>
+                    <div class="json-container">
+                        <div class="json-header">
+                            <span class="json-title">📄 Complete JSON Code</span>
+                            <button class="copy-btn" onclick="copyToClipboard('${workflow.id}')">
+                                📋 Copy JSON
+                            </button>
+                        </div>
+                        <pre class="json-code" id="json-${workflow.id}">${escapeHtml(formatJSON(workflow.jsonCode))}</pre>
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function formatJSON(jsonString) {
+            try {
+                const obj = JSON.parse(jsonString);
+                return JSON.stringify(obj, null, 2);
+            } catch {
+                return jsonString;
+            }
+        }
+        
+        function toggleWorkflow(id) {
+            const card = document.getElementById(`workflow-${id}`);
+            card.classList.toggle('expanded');
+        }
+        
+        async function copyToClipboard(id) {
+            const jsonElement = document.getElementById(`json-${id}`);
+            const text = jsonElement.textContent;
+            const button = event.target;
+            
+            try {
+                await navigator.clipboard.writeText(text);
+                button.textContent = '✅ Copied!';
+                button.classList.add('copied');
+                
+                setTimeout(() => {
+                    button.textContent = '📋 Copy JSON';
+                    button.classList.remove('copied');
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                button.textContent = '❌ Failed';
+                setTimeout(() => {
+                    button.textContent = '📋 Copy JSON';
+                }, 2000);
+            }
+        }
+        
+        // Filter functionality
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const searchBox = document.getElementById('searchBox');
+        
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
+                const filter = button.dataset.filter;
+                let filtered = workflows;
+                
+                if (filter !== 'all') {
+                    filtered = workflows.filter(w => w.categories.includes(filter));
+                }
+                
+                renderWorkflows(filtered);
+            });
+        });
+        
+        // Search functionality
+        searchBox.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filtered = workflows.filter(w => 
+                w.title.toLowerCase().includes(searchTerm) ||
+                w.description.toLowerCase().includes(searchTerm) ||
+                w.technologies.some(t => t.toLowerCase().includes(searchTerm)) ||
+                w.pattern.toLowerCase().includes(searchTerm) ||
+                w.filename.toLowerCase().includes(searchTerm)
+            );
+            renderWorkflows(filtered);
+        });
+        
+        // Initial render
+        renderWorkflows();
+    </script>
+</body>
+</html>
