@@ -1,0 +1,25 @@
+{
+  "buildCommand": "echo 'No build required'",
+  "outputDirectory": ".",
+  "framework": null,
+  "installCommand": "echo 'No install required'",
+  "functions": {
+    "api/verify-password.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "routes": [
+    {
+      "src": "/",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/dashboard",
+      "dest": "/RAGdashboard.html"
+    },
+    {
+      "src": "/api/verify-password",
+      "dest": "/api/verify-password.js"
+    }
+  ]
+}
