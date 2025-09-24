@@ -1,0 +1,17 @@
+{
+  "name": "rag-dashboard",
+  "version": "1.0.0",
+  "description": "n8n RAG Workflows Dashboard with password protection",
+  "main": "index.html",
+  "scripts": {
+    "dev": "echo 'Development server not needed for static files'",
+    "build": "echo 'No build process required'",
+    "start": "echo 'Static files served directly'"
+  },
+  "keywords": ["dashboard", "n8n", "rag", "workflows"],
+  "author": "Your Name",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}
